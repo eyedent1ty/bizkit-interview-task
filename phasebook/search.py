@@ -26,6 +26,7 @@ def search_users(args):
 
     # Implement search here!
 
+    # No search parameter, return ALL users
     if not args:
         return USERS
     
@@ -37,12 +38,9 @@ def search_users(args):
 # A function used to filter users based on the given criteria
 def filter_users(args, users):
     def filter_key(user):
-        if (
-            args.get('id') == user.get('id') or
-            args.get('name') in user.get('name') or
-            int(args.get('age')) == user.get('age') or
-            args.get('occupation') in user.get('occupation')
-        ):
+        for key in args.keys():
+            if (not is_values_match(key, args, user)):
+                continue
             return True
         return False
     
@@ -51,17 +49,23 @@ def filter_users(args, users):
 # A function used to sort users based on the order of precedence provided
 def sort_users(args, users):
     def sorting_key(user):
-        precedence = ['id', 'name', 'age', 'occupation']
         sorted_criteria = []
 
-        for key in precedence:
-            if key == 'id':
-                sorted_criteria.append(args.get('id') == user.get('id'))
-            elif key == 'age':
-                sorted_criteria.append(int(args.get('age')) == user.get('age'))
-            elif key in ['name', 'occupation']:
-                sorted_criteria.append(args.get(key) in user.get(key, ''))
+        for key in args.keys():
+            sorted_criteria.append(is_values_match(key, args, user))
 
         return tuple(sorted_criteria)
     
     return sorted(users, key=sorting_key, reverse=True)
+
+# A helper function that is used for both filtering and sorting of users
+def is_values_match(key, args, user):
+    if (key == 'id' and args.get('id') == user.get('id')):
+        return True
+    elif (key == 'age'):
+        user_age = int(user.get('age'))
+        args_age = int(args.get('age'))
+        return user_age >= args_age - 1 and user_age <= args_age + 1
+    elif (key in ['name', 'occupation'] and args.get(key).upper() in user.get(key).upper()):
+        return True
+    return False
